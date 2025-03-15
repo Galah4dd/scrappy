@@ -97,6 +97,22 @@
             pointer-events: none; /* Evita que interfiera con otros elementos */
             transform: translate(-50%, -50%);
         }
+        /* Estilo para los memes GIF */
+        .meme-gif {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border: 3px solid #000;
+            border-radius: 10px;
+            pointer-events: none; /* Evita que los memes interfieran con los clics */
+        }
+        /* Estilo para el texto debajo de la foto del famoso */
+        .celebrity-caption {
+            font-family: "Comic Sans MS", cursive;
+            font-size: 14px;
+            color: #000;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -123,9 +139,7 @@
 
     <!-- Galería de memes de celebridades -->
     <div class="meme-gallery">
-        <img src="meme1.jpg" alt="Meme de celebridad 1">
-        <img src="meme2.jpg" alt="Meme de celebridad 2">
-        <img src="meme3.jpg" alt="Meme de celebridad 3">
+        <!-- Aquí se mostrarán las celebridades -->
     </div>
 
     <!-- Puntero personalizado -->
@@ -136,6 +150,7 @@
         const video = document.getElementById('video');
         const captureButton = document.getElementById('capture');
         const photoTaken = document.getElementById('photo-taken');
+        const memeGallery = document.querySelector('.meme-gallery');
         const canvas = document.createElement('canvas'); // Canvas oculto para procesar la foto
         const customCursor = document.getElementById('custom-cursor');
 
@@ -161,7 +176,46 @@
             const photoData = canvas.toDataURL('image/png');
             photoTaken.src = photoData;
             photoTaken.style.display = 'block';
+
+            // Obtener 3 celebridades aleatorias
+            fetchRandomCelebrities();
         });
+
+        // Función para obtener 3 celebridades aleatorias desde la API de TMDB
+        async function fetchRandomCelebrities() {
+            const apiKey = '72409a82219e5a2b1a0e9be6307d5550'; // Reemplaza con tu API Key de TMDB
+            const url = `https://api.themoviedb.org/3/person/popular?api_key=${apiKey}&language=es-ES&page=${Math.floor(Math.random()*10)}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const celebrities = data.results.slice(0, 1); // Tomar las primeras 3 celebridades
+
+                // Limpiar la galería de memes
+                memeGallery.innerHTML = '';
+
+                // Mostrar las celebridades en la galería
+                celebrities.forEach(celebrity => {
+                    const celebrityContainer = document.createElement('div');
+                    celebrityContainer.classList.add('text-center');
+
+                    const celebrityImage = document.createElement('img');
+                    celebrityImage.src = `https://image.tmdb.org/t/p/w200${celebrity.profile_path}`;
+                    celebrityImage.alt = celebrity.name;
+                    celebrityImage.classList.add('meme-gallery-img');
+
+                    const celebrityCaption = document.createElement('p');
+                    celebrityCaption.textContent = "Imagen del muchacho tocayo famoso";
+                    celebrityCaption.classList.add('celebrity-caption');
+
+                    celebrityContainer.appendChild(celebrityImage);
+                    celebrityContainer.appendChild(celebrityCaption);
+                    memeGallery.appendChild(celebrityContainer);
+                });
+            } catch (error) {
+                console.error("Error al obtener las celebridades: ", error);
+            }
+        }
 
         // Aumentar la sensibilidad del mouse
         const sensitivityMultiplier = 5; // Ajusta este valor para mayor o menor sensibilidad
@@ -177,6 +231,33 @@
             customCursor.style.left = `${newX}px`;
             customCursor.style.top = `${newY}px`;
         });
+
+        // Función para agregar memes GIF en posiciones aleatorias
+        function addRandomMemes() {
+            const memes = [
+                'https://media.giphy.com/media/3o7aTskHEUdgCQAXde/giphy.gif', // Meme 1
+                'https://media.giphy.com/media/l0HlTy9x8FZo0XO1i/giphy.gif', // Meme 2
+                'https://media.giphy.com/media/3o7abAHdYvZdBNnGZq/giphy.gif', // Meme 3
+            ];
+
+            memes.forEach(memeUrl => {
+                const meme = document.createElement('img');
+                meme.src = memeUrl;
+                meme.classList.add('meme-gif');
+
+                // Posición aleatoria
+                const randomX = Math.random() * (window.innerWidth - 120); // Ajustar al ancho del meme
+                const randomY = Math.random() * (window.innerHeight - 120); // Ajustar al alto del meme
+
+                meme.style.left = `${randomX}px`;
+                meme.style.top = `${randomY}px`;
+
+                document.body.appendChild(meme);
+            });
+        }
+
+        // Agregar memes GIF al cargar la página
+        addRandomMemes();
     </script>
 </body>
 </html>
