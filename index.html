@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celebrity Look-Alike Feo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Fuentes aleatorias y colores chillones */
+        body {
+            background-color: #ffcc00; /* Amarillo chillón */
+            font-family: "Comic Sans MS", cursive, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Evita el scroll */
+            cursor: none; /* Oculta el cursor predeterminado */
+        }
+        h1 {
+            font-family: "Papyrus", fantasy;
+            color: #ff00ff; /* Rosa fuerte */
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #00ff00; /* Verde */
+            color: #000; /* Texto negro */
+            font-family: "Impact", sans-serif;
+            border: 2px solid #000; /* Borde negro más delgado */
+            padding: 1px 3px; /* Padding reducido */
+            cursor: none; /* Oculta el cursor al pasar sobre el botón */
+            margin-top: 10px;
+            font-size: 8px; /* Texto más pequeño */
+            width: 60px; /* Ancho reducido */
+            height: 20px; /* Altura reducida */
+            border-radius: 3px; /* Bordes ligeramente redondeados */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+        }
+        button:hover {
+            background-color: #ffff00; /* Amarillo */
+        }
+        #video {
+            border: 5px solid #ff0000; /* Borde rojo */
+        }
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 800px;
+        }
+        .content {
+            text-align: center;
+            margin-right: 20px;
+        }
+        .camera {
+            width: 320px;
+            height: 240px;
+        }
+        /* Contenedor de imágenes de memes */
+        .meme-gallery {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .meme-gallery img {
+            width: 120px;
+            height: 120px;
+            border: 3px solid #000;
+            border-radius: 10px;
+        }
+        /* Cuadro para mostrar la foto tomada */
+        .photo-box {
+            margin-top: 20px;
+            margin-left: -100px; /* Desplazado hacia la izquierda */
+            text-align: center;
+        }
+        .photo-box img {
+            width: 320px;
+            height: 240px;
+            border: 5px solid #ff0000; /* Borde rojo */
+        }
+        /* Puntero personalizado */
+        .custom-cursor {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background-color: red;
+            border-radius: 50%;
+            pointer-events: none; /* Evita que interfiera con otros elementos */
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenedor principal -->
+    <div class="container">
+        <!-- Contenido principal -->
+        <div class="content">
+            <h1 class="text-4xl font-bold">¡Descubre a tu doble famoso!</h1>
+            <p class="text-lg">Toma una foto y descubre a qué celebridad te pareces.</p>
+            <button id="capture">Tomar Foto</button>
+        </div>
+
+        <!-- Cámara -->
+        <div class="camera">
+            <video id="video" width="320" height="240" autoplay class="mx-auto"></video>
+        </div>
+    </div>
+
+    <!-- Cuadro para mostrar la foto tomada -->
+    <div class="photo-box">
+        <h2 class="text-2xl font-bold">Tu Foto</h2>
+        <img id="photo-taken" src="" alt="Foto tomada" style="display: none;">
+    </div>
+
+    <!-- Galería de memes de celebridades -->
+    <div class="meme-gallery">
+        <img src="meme1.jpg" alt="Meme de celebridad 1">
+        <img src="meme2.jpg" alt="Meme de celebridad 2">
+        <img src="meme3.jpg" alt="Meme de celebridad 3">
+    </div>
+
+    <!-- Puntero personalizado -->
+    <div id="custom-cursor" class="custom-cursor"></div>
+
+    <!-- Script para la cámara y sensibilidad del mouse -->
+    <script>
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('capture');
+        const photoTaken = document.getElementById('photo-taken');
+        const canvas = document.createElement('canvas'); // Canvas oculto para procesar la foto
+        const customCursor = document.getElementById('custom-cursor');
+
+        // Configurar el canvas
+        canvas.width = 320;
+        canvas.height = 240;
+
+        // Acceder a la cámara
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((err) => {
+                console.error("Error al acceder a la cámara: ", err);
+            });
+
+        // Capturar foto
+        captureButton.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Mostrar la foto en el cuadro
+            const photoData = canvas.toDataURL('image/png');
+            photoTaken.src = photoData;
+            photoTaken.style.display = 'block';
+        });
+
+        // Aumentar la sensibilidad del mouse
+        const sensitivityMultiplier = 5; // Ajusta este valor para mayor o menor sensibilidad
+
+        document.addEventListener('mousemove', (event) => {
+            const { clientX, clientY, movementX, movementY } = event;
+
+            // Amplificar el movimiento del cursor personalizado
+            const newX = clientX + (movementX * sensitivityMultiplier);
+            const newY = clientY + (movementY * sensitivityMultiplier);
+
+            // Mover el cursor personalizado
+            customCursor.style.left = `${newX}px`;
+            customCursor.style.top = `${newY}px`;
+        });
+    </script>
+</body>
+</html>
