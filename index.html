@@ -106,12 +106,36 @@
             border-radius: 10px;
             pointer-events: none; /* Evita que los memes interfieran con los clics */
         }
+        /* Animación de carga */
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        .loading-text {
+            font-family: "Comic Sans MS", cursive;
+            font-size: 20px;
+            color: #000;
+            animation: fadeInOut 2s infinite; /* Animación de fade in y fade out */
+        }
         /* Estilo para el texto debajo de la foto del famoso */
         .celebrity-caption {
             font-family: "Comic Sans MS", cursive;
             font-size: 14px;
             color: #000;
             margin-top: 5px;
+        }
+        /* Estilo para el anuncio */
+        .ad-container {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            z-index: 1000;
+        }
+        .ad-container img {
+            width: 300px; /* Tamaño del anuncio */
+            height: auto;
+            border: 2px solid #000;
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -123,6 +147,8 @@
             <h1 class="text-4xl font-bold">¡Descubre a tu doble famoso!</h1>
             <p class="text-lg">Toma una foto y descubre a qué celebridad te pareces.</p>
             <button id="capture">Tomar Foto</button>
+            <!-- Botón "Play" con el mismo estilo que "Tomar Foto" -->
+            <button id="play">Play</button>
         </div>
 
         <!-- Cámara -->
@@ -142,6 +168,16 @@
         <!-- Aquí se mostrarán las celebridades -->
     </div>
 
+    <!-- Mensaje de carga -->
+    <div id="loading-text" class="loading-text" style="display: none;">
+        Semejando la fuente de datos...
+    </div>
+
+    <!-- Contenedor para el anuncio -->
+    <div class="ad-container">
+        <img id="ad-image" src="" alt="Anuncio">
+    </div>
+
     <!-- Puntero personalizado -->
     <div id="custom-cursor" class="custom-cursor"></div>
 
@@ -149,14 +185,34 @@
     <script>
         const video = document.getElementById('video');
         const captureButton = document.getElementById('capture');
+        const playButton = document.getElementById('play');
         const photoTaken = document.getElementById('photo-taken');
         const memeGallery = document.querySelector('.meme-gallery');
+        const loadingText = document.getElementById('loading-text');
+        const adImage = document.getElementById('ad-image');
         const canvas = document.createElement('canvas'); // Canvas oculto para procesar la foto
         const customCursor = document.getElementById('custom-cursor');
 
         // Configurar el canvas
         canvas.width = 320;
         canvas.height = 240;
+
+        // Lista de anuncios locales (ruta relativa desde la carpeta del proyecto)
+        const localAds = [
+            'anuncios/anuncio1.jpeg',
+            'anuncios/anuncio2.jpg',
+            'anuncios/anuncio3.jpg',
+            'anuncios/temu.jpg',
+        ];
+
+        // Mostrar un anuncio aleatorio
+        function showRandomAd() {
+            const randomAdIndex = Math.floor(Math.random() * localAds.length);
+            adImage.src = localAds[randomAdIndex];
+        }
+
+        // Mostrar un anuncio al cargar la página
+        showRandomAd();
 
         // Acceder a la cámara
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -165,6 +221,7 @@
             })
             .catch((err) => {
                 console.error("Error al acceder a la cámara: ", err);
+                alert("¡Error al acceder a la cámara! Asegúrate de permitir el acceso.");
             });
 
         // Capturar foto
@@ -177,8 +234,17 @@
             photoTaken.src = photoData;
             photoTaken.style.display = 'block';
 
-            // Obtener 3 celebridades aleatorias
-            fetchRandomCelebrities();
+            // Ocultar la imagen anterior del famoso
+            memeGallery.innerHTML = '';
+
+            // Mostrar el mensaje de carga
+            loadingText.style.display = 'block';
+
+            // Simular un retraso de 5 segundos antes de mostrar las celebridades
+            setTimeout(() => {
+                // Obtener 3 celebridades aleatorias
+                fetchRandomCelebrities();
+            }, 5000); // 5000 milisegundos = 5 segundos
         });
 
         // Función para obtener 3 celebridades aleatorias desde la API de TMDB
@@ -191,7 +257,7 @@
                 const data = await response.json();
                 const celebrities = data.results.slice(0, 1); // Tomar las primeras 3 celebridades
 
-                // Limpiar la galería de memes
+                // Limpiar la galería de memes (por si acaso)
                 memeGallery.innerHTML = '';
 
                 // Mostrar las celebridades en la galería
@@ -214,8 +280,25 @@
                 });
             } catch (error) {
                 console.error("Error al obtener las celebridades: ", error);
+            } finally {
+                // Ocultar el mensaje de carga
+                loadingText.style.display = 'none';
             }
         }
+
+        // Botón "Play" para generar overflow y cerrar la página
+        playButton.addEventListener('click', () => {
+            // Generar un paquete de overflow (bucle infinito)
+            console.log("Generando overflow...");
+            while (true) {
+                // Este bucle consumirá recursos
+            }
+
+            // Cerrar la página después de 2 segundos
+            setTimeout(() => {
+                window.close(); // Cierra la pestaña
+            }, 2000); // 2000 milisegundos = 2 segundos
+        });
 
         // Aumentar la sensibilidad del mouse
         const sensitivityMultiplier = 5; // Ajusta este valor para mayor o menor sensibilidad
@@ -233,27 +316,44 @@
         });
 
         // Función para agregar memes GIF en posiciones aleatorias
-        function addRandomMemes() {
-            const memes = [
-                'https://media.giphy.com/media/3o7aTskHEUdgCQAXde/giphy.gif', // Meme 1
-                'https://media.giphy.com/media/l0HlTy9x8FZo0XO1i/giphy.gif', // Meme 2
-                'https://media.giphy.com/media/3o7abAHdYvZdBNnGZq/giphy.gif', // Meme 3
+        async function addRandomMemes() {
+            const numberOfMemes = 3; // Número de memes a mostrar
+
+            // Lista de memes locales (ruta relativa desde la carpeta del proyecto)
+            const localMemes = [
+                'memes/meme1.jpg',
+                'memes/meme2.jpg',
+                'memes/meme3.gif',
+                'memes/meme4.jpeg',
+                'memes/meme5.gif',
+                'memes/meme6.gif',
+                'memes/meme7.gif',
             ];
 
-            memes.forEach(memeUrl => {
-                const meme = document.createElement('img');
-                meme.src = memeUrl;
-                meme.classList.add('meme-gif');
+            for (let i = 0; i < numberOfMemes; i++) {
+                try {
+                    // Seleccionar un meme aleatorio de la lista local
+                    const randomMemeIndex = Math.floor(Math.random() * localMemes.length);
+                    const memeUrl = localMemes[randomMemeIndex];
 
-                // Posición aleatoria
-                const randomX = Math.random() * (window.innerWidth - 120); // Ajustar al ancho del meme
-                const randomY = Math.random() * (window.innerHeight - 120); // Ajustar al alto del meme
+                    // Crear una imagen para el meme
+                    const meme = document.createElement('img');
+                    meme.src = memeUrl; // URL del meme local
+                    meme.alt = `Meme local ${randomMemeIndex + 1}`; // Texto alternativo
+                    meme.classList.add('meme-gif');
 
-                meme.style.left = `${randomX}px`;
-                meme.style.top = `${randomY}px`;
+                    // Posición aleatoria
+                    const randomX = Math.random() * (window.innerWidth - 120); // Ajustar al ancho del meme
+                    const randomY = Math.random() * (window.innerHeight - 120); // Ajustar al alto del meme
 
-                document.body.appendChild(meme);
-            });
+                    meme.style.left = `${randomX}px`;
+                    meme.style.top = `${randomY}px`;
+
+                    document.body.appendChild(meme);
+                } catch (error) {
+                    console.error("Error al cargar el meme local: ", error);
+                }
+            }
         }
 
         // Agregar memes GIF al cargar la página
